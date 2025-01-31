@@ -1,2 +1,2 @@
 #!/bin/bash
-python line_bot.py
+gunicorn -w 4 -b 0.0.0.0:$PORT line_bot:app
