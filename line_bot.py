@@ -30,22 +30,24 @@ def webhook():
             # LINEに返信を送信
             send_line_reply(reply_token, gpt_response)
 
-    return "OK", 200
+    return "OK"
 
-def get_chatgpt_response(prompt):
+def get_chatgpt_response(user_message):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=200,
-            temperature=0.7
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": user_message}
+            ]
         )
         return response.choices[0].message["content"].strip()
     except Exception as e:
-        return f"Error: {str(e)}"
+        print(f"Error communicating with ChatGPT: {e}")
+        return "Sorry, I couldn't process your message."
 
 def send_line_reply(reply_token, message):
-    line_api_url = "https://api.line.me/v2/bot/message/reply"
+    url = "https://api.line.me/v2/bot/message/reply"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {os.getenv('LINE_ACCESS_TOKEN')}"
@@ -55,10 +57,9 @@ def send_line_reply(reply_token, message):
         "messages": [{"type": "text", "text": message}]
     }
 
-    response = requests.post(line_api_url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, json=data)
     if response.status_code != 200:
-        print(f"LINE API Error: {response.status_code}, {response.text}")
+        print(f"Error sending message to LINE: {response.text}")
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
