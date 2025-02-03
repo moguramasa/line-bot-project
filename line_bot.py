@@ -5,21 +5,20 @@ import openai
 
 app = Flask(__name__)
 
-# カスタムモデルを直接指定
-CUSTOM_MODEL_NAME = "ft:gpt-4o-mini-2024-07-18:plamoul::AvghQ5ci"
+# カスタムモデル名を環境変数から取得（環境変数が設定されていない場合はデフォルトを使用）
+CUSTOM_MODEL_NAME = os.getenv("CUSTOM_MODEL_NAME", "ft:gpt-4o-2024-08-06:plamoul::AwzZfZgn")
 
-# OpenAI APIキーをコード内で直接指定（例、変更してください）
-OPENAI_API_KEY = "sk-your-key-here"
+# APIキーも環境変数から取得
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 @app.route("/", methods=["GET"])
 def home():
-    return "LINE Bot with Custom ChatGPT model is running!"
+    return f"LINE Bot is running with {CUSTOM_MODEL_NAME}!"
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
     body = request.json
 
-    # LINEのイベントデータを取得
     events = body.get("events", [])
     for event in events:
         if event["type"] == "message" and "text" in event["message"]:
@@ -35,14 +34,13 @@ def webhook():
     return jsonify({"status": "ok"})
 
 def get_chatgpt_response(user_message):
-    # OpenAI APIへのリクエスト
     response = openai.ChatCompletion.create(
         model=CUSTOM_MODEL_NAME,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": user_message}
         ],
-        api_key=OPENAI_API_KEY  # APIキーを直接渡す
+        api_key=OPENAI_API_KEY
     )
     return response.choices[0].message["content"]
 
@@ -58,6 +56,5 @@ def send_line_reply(reply_token, message):
     }
     requests.post(line_api_url, headers=headers, json=data)
 
-# 実行コード
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
