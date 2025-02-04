@@ -8,6 +8,8 @@ app = Flask(__name__)
 # カスタムモデル名を環境変数から取得（環境変数が設定されていない場合はデフォルトを使用）
 CUSTOM_MODEL_NAME = os.getenv("CUSTOM_MODEL_NAME", "ft:gpt-4o-2024-08-06:plamoul::AwzZfZgn")
 
+LINE_ACCESS_TOKEN = os.getenv("LINE_ACCESS_TOKEN")
+
 # APIキーも環境変数から取得
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
