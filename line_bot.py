@@ -19,21 +19,8 @@ def home():
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    body = request.json
-
-    events = body.get("events", [])
-    for event in events:
-        if event["type"] == "message" and "text" in event["message"]:
-            reply_token = event["replyToken"]
-            user_message = event["message"]["text"]
-
-            # ChatGPTで応答を取得
-            gpt_response = get_chatgpt_response(user_message)
-
-            # LINEに返信を送信
-            send_line_reply(reply_token, gpt_response)
-
-    return jsonify({"status": "ok"})
+    print("Webhook request received")
+    return jsonify({"status": "ok"}), 200
 
 def get_chatgpt_response(user_message):
     response = openai.ChatCompletion.create(
