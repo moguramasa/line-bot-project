@@ -31,7 +31,7 @@ def webhook():
             user_message = event["message"]["text"]
 
             # ChatGPTで応答を取得
-            gpt_response = get_chatgpt_response(user_message)
+            gpt_response = format_response(get_chatgpt_response(user_message))
 
             # LINEに返信を送信
             send_line_reply(reply_token, gpt_response)
@@ -47,14 +47,19 @@ def get_chatgpt_response(user_message):
                 {
                     "role": "system", 
                     "content": (
-                        "あなたは日本語の丁寧語を使用するアシスタントです。"
-                        "必ず文末を『です・ます調』で話し、短い返答でも敬語を使用してください。"
-                        "具体的な例: 『その質問について説明いたします。』や『はい、承知いたしました。』のように答えてください。"
-                        "また、必要に応じて簡潔かつ親しみやすい文体で返答してください。"
+                        "あなたは日本語の専門知識を持つアシスタントです。"
+                        "以下の条件を守って回答してください。"
+                        "1. 文末は必ず『です・ます調』で終えること。"
+                        "2. 短すぎる回答を避け、50～150文字程度で詳細に回答すること。"
+                        "3. 質問に対して具体的で実用的な内容を提供すること。"
+                        "4. 可能な限り親しみやすく、かつ丁寧に答えること。"
+                        "例: 『ガストースはガス抜き性能が高い金型です。この技術により、成形品の品質が安定します。』"
                     )
                 },
                 {"role": "user", "content": user_message}
             ],
+            temperature=0.7,  # 応答のランダム性を調整
+            max_tokens=300,   # 応答の最大長を設定
             api_key=OPENAI_API_KEY
         )
         print(f"Response time: {time.time() - start_time} seconds")
@@ -62,6 +67,11 @@ def get_chatgpt_response(user_message):
     except Exception as e:
         print("OpenAI API error:", e)
         return "エラーが発生しました"
+
+def format_response(response):
+    if not response.endswith("です。") and not response.endswith("ます。"):
+        response += " 以上です。"
+    return response
 
 def send_line_reply(reply_token, message):
     line_api_url = "https://api.line.me/v2/bot/message/reply"
