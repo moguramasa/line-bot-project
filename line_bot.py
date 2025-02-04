@@ -69,8 +69,8 @@ def get_chatgpt_response(user_message):
         return "エラーが発生しました"
 
 def format_response(response):
-    if not response.endswith("です。") and not response.endswith("ます。"):
-        response += " 以上です。"
+    if response.endswith("以上です。"):
+        response = response[:-5]
     response += " 何か他に知りたいことがあればお知らせください。"
     return response
 
