@@ -71,6 +71,7 @@ def get_chatgpt_response(user_message):
 def format_response(response):
     if not response.endswith("です。") and not response.endswith("ます。"):
         response += " 以上です。"
+    response += " 何か他に知りたいことがあればお知らせください。"
     return response
 
 def send_line_reply(reply_token, message):
