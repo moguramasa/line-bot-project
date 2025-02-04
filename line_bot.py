@@ -20,16 +20,26 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # Dropbox API アクセストークン
 DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN")
 
-def fetch_product_data_from_dropbox():
+def fetch_data_from_dropbox(file_path):
     try:
         dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
-        _, response = dbx.files_download("/product_data.json")
-        product_data = json.loads(response.content.decode("utf-8"))
-        print("Dropboxから取得したデータ:", product_data)
-        return product_data
+        _, response = dbx.files_download(file_path)
+        return response.content.decode("utf-8")
     except Exception as e:
         print(f"Dropboxからデータ取得エラー: {e}")
-        return []
+        return ""
+
+def fetch_all_data():
+    product_data = fetch_data_from_dropbox("/product_data.json")
+    company_info = fetch_data_from_dropbox("/company_info.txt")
+    product_specs = fetch_data_from_dropbox("/product_specs.csv")
+
+    product_data_json = json.loads(product_data) if product_data else []
+    print("製品データ:", product_data_json)
+    print("会社情報:", company_info)
+    print("製品仕様:", product_specs)
+
+    return product_data_json, company_info, product_specs
 
 def find_product_info(product_name, product_data):
     for product in product_data:
@@ -46,20 +56,23 @@ def webhook():
     print("Webhook request received")
     body = request.json
 
+    # Dropboxからすべてのデータを取得
+    product_data, company_info, product_specs = fetch_all_data()
+
     events = body.get("events", [])
     for event in events:
         if event["type"] == "message" and "text" in event["message"]:
             reply_token = event["replyToken"]
             user_message = event["message"]["text"]
 
-            # Dropboxからデータを取得
-            product_data = fetch_product_data_from_dropbox()
-
-            # 製品情報を検索
-            product_info = find_product_info(user_message, product_data)
+            # 質問内容によって応答を切り替え
+            if "社長" in user_message:
+                response_text = company_info.strip()
+            else:
+                response_text = find_product_info(user_message, product_data)
 
             # ChatGPTで応答を取得
-            gpt_response = format_response(get_chatgpt_response(user_message, product_info))
+            gpt_response = format_response(get_chatgpt_response(user_message, response_text))
 
             # LINEに返信を送信
             send_line_reply(reply_token, gpt_response)
