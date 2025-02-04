@@ -2,11 +2,12 @@ import os
 from flask import Flask, request, jsonify
 import requests
 import openai
+import time
 
 app = Flask(__name__)
 
-# カスタムモデル名をGPT-4.0に設定
-CUSTOM_MODEL_NAME = "gpt-4o"
+# カスタムモデル名を直接指定
+CUSTOM_MODEL_NAME = "ft:gpt-4o-2024-08-06:plamoul::AwzZfZgn"
 
 LINE_ACCESS_TOKEN = os.getenv("LINE_ACCESS_TOKEN")
 print("LINE_ACCESS_TOKEN:", LINE_ACCESS_TOKEN)
@@ -38,6 +39,7 @@ def webhook():
     return jsonify({"status": "ok"}), 200
 
 def get_chatgpt_response(user_message):
+    start_time = time.time()
     try:
         response = openai.ChatCompletion.create(
             model=CUSTOM_MODEL_NAME,
@@ -47,6 +49,7 @@ def get_chatgpt_response(user_message):
             ],
             api_key=OPENAI_API_KEY
         )
+        print(f"Response time: {time.time() - start_time} seconds")
         return response.choices[0].message["content"]
     except Exception as e:
         print("OpenAI API error:", e)
