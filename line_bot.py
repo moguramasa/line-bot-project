@@ -44,7 +44,7 @@ def get_chatgpt_response(user_message):
         response = openai.ChatCompletion.create(
             model=CUSTOM_MODEL_NAME,
             messages=[
-                {"role": "system", "content": "あなたは丁寧で親切なアシスタントです。常に文末を『です・ます調』で話し、詳しく説明してください。"},
+                {"role": "system", "content": "あなたは丁寧で親切なアシスタントです。ユーザーとの会話では必ず『です・ます調』を使用し、説明は簡潔かつわかりやすく行ってください。"},
                 {"role": "user", "content": user_message}
             ],
             api_key=OPENAI_API_KEY
