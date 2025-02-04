@@ -24,7 +24,9 @@ def fetch_product_data_from_dropbox():
     try:
         dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
         _, response = dbx.files_download("/product_data.json")
-        return json.loads(response.content.decode("utf-8"))
+        product_data = json.loads(response.content.decode("utf-8"))
+        print("Dropboxから取得したデータ:", product_data)
+        return product_data
     except Exception as e:
         print(f"Dropboxからデータ取得エラー: {e}")
         return []
@@ -33,7 +35,7 @@ def find_product_info(product_name, product_data):
     for product in product_data:
         if product["product_name"] == product_name:
             return product["description"]
-    return "該当する製品が見つかりませんでした。"
+    return f"申し訳ありません。'{product_name}'に該当する製品情報が見つかりませんでした。"
 
 @app.route("/", methods=["GET"])
 def home():
