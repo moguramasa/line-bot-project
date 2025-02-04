@@ -20,6 +20,19 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # Dropbox API アクセストークン
 DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN")
 
+# キャッシュ用データ格納
+cached_data = {"product_data": None, "company_info": None, "product_specs": None}
+
+# Dropboxからデータを取得しキャッシュ
+def fetch_all_data():
+    if not cached_data["product_data"]:
+        cached_data["product_data"] = fetch_data_from_dropbox("/product_data.json")
+        cached_data["company_info"] = fetch_data_from_dropbox("/company_info.txt")
+        cached_data["product_specs"] = fetch_data_from_dropbox("/product_specs.csv")
+
+    product_data_json = json.loads(cached_data["product_data"]) if cached_data["product_data"] else []
+    return product_data_json, cached_data["company_info"], cached_data["product_specs"]
+
 def fetch_data_from_dropbox(file_path):
     try:
         dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
@@ -28,18 +41,6 @@ def fetch_data_from_dropbox(file_path):
     except Exception as e:
         print(f"Dropboxからデータ取得エラー: {e}")
         return ""
-
-def fetch_all_data():
-    product_data = fetch_data_from_dropbox("/product_data.json")
-    company_info = fetch_data_from_dropbox("/company_info.txt")
-    product_specs = fetch_data_from_dropbox("/product_specs.csv")
-
-    product_data_json = json.loads(product_data) if product_data else []
-    print("製品データ:", product_data_json)
-    print("会社情報:", company_info)
-    print("製品仕様:", product_specs)
-
-    return product_data_json, company_info, product_specs
 
 def find_product_info(product_name, product_data):
     for product in product_data:
