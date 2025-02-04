@@ -3,6 +3,8 @@ from flask import Flask, request, jsonify
 import requests
 import openai
 import time
+import dropbox
+import json
 
 app = Flask(__name__)
 
@@ -14,6 +16,24 @@ print("LINE_ACCESS_TOKEN:", LINE_ACCESS_TOKEN)
 
 # APIキーも環境変数から取得
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Dropbox API アクセストークン
+DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN")
+
+def fetch_product_data_from_dropbox():
+    try:
+        dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+        _, response = dbx.files_download("/product_data.json")
+        return json.loads(response.content.decode("utf-8"))
+    except Exception as e:
+        print(f"Dropboxからデータ取得エラー: {e}")
+        return []
+
+def find_product_info(product_name, product_data):
+    for product in product_data:
+        if product["product_name"] == product_name:
+            return product["description"]
+    return "該当する製品が見つかりませんでした。"
 
 @app.route("/", methods=["GET"])
 def home():
@@ -30,8 +50,14 @@ def webhook():
             reply_token = event["replyToken"]
             user_message = event["message"]["text"]
 
+            # Dropboxからデータを取得
+            product_data = fetch_product_data_from_dropbox()
+
+            # 製品情報を検索
+            product_info = find_product_info(user_message, product_data)
+
             # ChatGPTで応答を取得
-            gpt_response = format_response(get_chatgpt_response(user_message))
+            gpt_response = format_response(get_chatgpt_response(product_info))
 
             # LINEに返信を送信
             send_line_reply(reply_token, gpt_response)
