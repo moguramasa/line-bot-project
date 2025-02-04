@@ -7,7 +7,7 @@ import time
 app = Flask(__name__)
 
 # カスタムモデル名を直接指定
-CUSTOM_MODEL_NAME = "ft:gpt-4o-2024-08-06:plamoul::AwzZfZgn"
+CUSTOM_MODEL_NAME = "ft:gpt-4o-2024-08-06:plamoul::Ax4X09hy"
 
 LINE_ACCESS_TOKEN = os.getenv("LINE_ACCESS_TOKEN")
 print("LINE_ACCESS_TOKEN:", LINE_ACCESS_TOKEN)
