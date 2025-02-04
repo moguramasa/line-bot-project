@@ -9,7 +9,7 @@ app = Flask(__name__)
 CUSTOM_MODEL_NAME = os.getenv("CUSTOM_MODEL_NAME", "ft:gpt-4o-2024-08-06:plamoul::AwzZfZgn")
 
 LINE_ACCESS_TOKEN = os.getenv("LINE_ACCESS_TOKEN")
-
+print("LINE_ACCESS_TOKEN:", LINE_ACCESS_TOKEN)
 # APIキーも環境変数から取得
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
