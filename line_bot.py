@@ -5,11 +5,12 @@ import openai
 
 app = Flask(__name__)
 
-# カスタムモデル名を環境変数から取得（環境変数が設定されていない場合はデフォルトを使用）
-CUSTOM_MODEL_NAME = os.getenv("CUSTOM_MODEL_NAME", "ft:gpt-4o-2024-08-06:plamoul::AwzZfZgn")
+# カスタムモデル名をGPT-4.0に設定
+CUSTOM_MODEL_NAME = "gpt-4o"
 
 LINE_ACCESS_TOKEN = os.getenv("LINE_ACCESS_TOKEN")
 print("LINE_ACCESS_TOKEN:", LINE_ACCESS_TOKEN)
+
 # APIキーも環境変数から取得
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -20,18 +21,36 @@ def home():
 @app.route("/webhook", methods=["POST"])
 def webhook():
     print("Webhook request received")
+    body = request.json
+
+    events = body.get("events", [])
+    for event in events:
+        if event["type"] == "message" and "text" in event["message"]:
+            reply_token = event["replyToken"]
+            user_message = event["message"]["text"]
+
+            # ChatGPTで応答を取得
+            gpt_response = get_chatgpt_response(user_message)
+
+            # LINEに返信を送信
+            send_line_reply(reply_token, gpt_response)
+
     return jsonify({"status": "ok"}), 200
 
 def get_chatgpt_response(user_message):
-    response = openai.ChatCompletion.create(
-        model=CUSTOM_MODEL_NAME,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": user_message}
-        ],
-        api_key=OPENAI_API_KEY
-    )
-    return response.choices[0].message["content"]
+    try:
+        response = openai.ChatCompletion.create(
+            model=CUSTOM_MODEL_NAME,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": user_message}
+            ],
+            api_key=OPENAI_API_KEY
+        )
+        return response.choices[0].message["content"]
+    except Exception as e:
+        print("OpenAI API error:", e)
+        return "エラーが発生しました"
 
 def send_line_reply(reply_token, message):
     line_api_url = "https://api.line.me/v2/bot/message/reply"
