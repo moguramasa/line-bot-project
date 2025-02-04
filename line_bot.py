@@ -59,14 +59,14 @@ def webhook():
             product_info = find_product_info(user_message, product_data)
 
             # ChatGPTで応答を取得
-            gpt_response = format_response(get_chatgpt_response(product_info))
+            gpt_response = format_response(get_chatgpt_response(user_message, product_info))
 
             # LINEに返信を送信
             send_line_reply(reply_token, gpt_response)
 
     return jsonify({"status": "ok"}), 200
 
-def get_chatgpt_response(user_message):
+def get_chatgpt_response(user_message, product_info):
     start_time = time.time()
     try:
         response = openai.ChatCompletion.create(
@@ -79,12 +79,12 @@ def get_chatgpt_response(user_message):
                         "以下の条件を守って回答してください。"
                         "1. 文末は必ず『です・ます調』で終えること。"
                         "2. 短すぎる回答を避け、50～150文字程度で詳細に回答すること。"
-                        "3. 質問に対して具体的で実用的な内容を提供すること。"
+                        "3. 提供された情報のみを使用し、それ以外の推測や仮定に基づいた回答は行わないこと。"
                         "4. 可能な限り親しみやすく、かつ丁寧に答えること。"
-                        "例: 『ガストースはガス抜き性能が高い金型です。この技術により、成形品の品質が安定します。』"
                     )
                 },
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
+                {"role": "assistant", "content": product_info}
             ],
             temperature=0.7,  # 応答のランダム性を調整
             max_tokens=300,   # 応答の最大長を設定
