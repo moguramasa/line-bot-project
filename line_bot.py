@@ -24,6 +24,7 @@ DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN")
 cached_data = {"product_data": None, "company_info": None, "product_specs": None}
 
 # Dropboxからデータを取得しキャッシュ
+
 def fetch_all_data():
     if not cached_data["product_data"]:
         cached_data["product_data"] = fetch_data_from_dropbox("/product_data.json")
@@ -93,8 +94,8 @@ def get_chatgpt_response(user_message, product_info):
                     "role": "system", 
                     "content": (
                         "あなたは株式会社プラモール精工の代表取締役社長である脇山です。"
-                        "質問に対して社長として丁寧に、かつ正確に回答してください。"
-                        "提供された情報のみを使用し、顧客や社内の社員に信頼を持たせる回答を行ってください。"
+                        "質問に対して社長として丁寧に、かつ正確に応答してください。"
+                        "提供された情報のみを使用し、顧客や社内の社員に信頼を持たせる応答を行ってください。"
                     )
                 },
                 {"role": "user", "content": user_message},
