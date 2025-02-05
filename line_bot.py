@@ -83,6 +83,9 @@ def webhook():
 def get_chatgpt_response(user_message, product_info):
     start_time = time.time()
     try:
+        print(f"使用中のモデル: {CUSTOM_MODEL_NAME}")  # モデル名を確認
+        print("リクエスト送信中...")
+
         response = openai.ChatCompletion.create(
             model=CUSTOM_MODEL_NAME,
             messages=[
@@ -91,23 +94,22 @@ def get_chatgpt_response(user_message, product_info):
                     "content": (
                         "あなたは日本語の専門知識を持つアシスタントです。"
                         "以下の条件を守って回答してください。"
-                        "1. 文末は必ず『です・ます調』で終えること。"
-                        "2. 短すぎる回答を避け、50～150文字程度で詳細に回答すること。"
-                        "3. 提供された情報のみを使用し、それ以外の推測や仮定に基づいた回答は行わないこと。"
-                        "4. 可能な限り親しみやすく、かつ丁寧に答えること。"
+                        "提供された情報のみを使用してください。"
                     )
                 },
                 {"role": "user", "content": user_message},
                 {"role": "assistant", "content": product_info}
             ],
-            temperature=0.7,  # 応答のランダム性を調整
-            max_tokens=300,   # 応答の最大長を設定
+            temperature=0.0,  # ランダム性を抑制
+            max_tokens=300,
             api_key=OPENAI_API_KEY
         )
+
+        print("API応答:", response)  # APIレスポンスを出力
         print(f"Response time: {time.time() - start_time} seconds")
         return response.choices[0].message["content"]
     except Exception as e:
-        print("OpenAI API error:", e)
+        print("OpenAI APIエラー:", e)
         return "エラーが発生しました"
 
 def format_response(response):
