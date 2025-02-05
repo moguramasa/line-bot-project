@@ -45,8 +45,8 @@ def fetch_data_from_dropbox(file_path):
 def find_product_info(product_name, product_data):
     for product in product_data:
         if product["product_name"] == product_name:
-            return product["description"]
-    return f"申し訳ありません。'{product_name}'に該当する製品情報が見つかりませんでした。"
+            return f"プラモール精工では、{product_name}に関する情報として以下の内容がございます。\n{product['description']}"
+    return f"申し訳ありません。プラモール精工では、'{product_name}'に該当する製品情報が見つかりませんでした。"
 
 @app.route("/", methods=["GET"])
 def home():
@@ -68,7 +68,7 @@ def webhook():
 
             # 質問内容によって応答を切り替え
             if "社長" in user_message:
-                response_text = company_info.strip()
+                response_text = f"プラモール精工の社長は、{company_info.strip()}です。"
             else:
                 response_text = find_product_info(user_message, product_data)
 
