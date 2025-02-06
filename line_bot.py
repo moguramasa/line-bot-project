@@ -44,6 +44,14 @@ def fetch_data_from_dropbox(file_path):
         return ""
 
 
+def extract_president_name(company_info):
+    lines = company_info.splitlines()
+    for line in lines:
+        if "代表取締役社長" in line:
+            return line.split("代表取締役社長: ")[-1].strip()
+    return "情報が見つかりません"
+
+
 def find_product_info(product_name, product_data):
     for product in product_data:
         if product["product_name"] == product_name:
@@ -77,7 +85,8 @@ def webhook():
 
             # 質問内容によって応答を切り替え
             if "社長" in user_message:
-                response_text = f"プラモール精工の社長は、{company_info.strip()}です。"
+                president_name = extract_president_name(company_info)
+                response_text = f"プラモール精工の社長は、{president_name}です。"
             else:
                 response_text = find_product_info(user_message, product_data)
 
