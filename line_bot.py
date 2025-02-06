@@ -24,7 +24,6 @@ DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN")
 cached_data = {"product_data": None, "company_info": None, "product_specs": None}
 
 # Dropboxからデータを取得しキャッシュ
-
 def fetch_all_data():
     if not cached_data["product_data"]:
         cached_data["product_data"] = fetch_data_from_dropbox("/product_data.json")
@@ -33,6 +32,7 @@ def fetch_all_data():
 
     product_data_json = json.loads(cached_data["product_data"]) if cached_data["product_data"] else []
     return product_data_json, cached_data["company_info"], cached_data["product_specs"]
+
 
 def fetch_data_from_dropbox(file_path):
     try:
@@ -43,15 +43,23 @@ def fetch_data_from_dropbox(file_path):
         print(f"Dropboxからデータ取得エラー: {e}")
         return ""
 
+
 def find_product_info(product_name, product_data):
     for product in product_data:
         if product["product_name"] == product_name:
             return f"プラモール精工では、{product_name}に関する情報として以下の内容がございます。\n{product['description']}"
     return f"申し訳ありません。プラモール精工では、'{product_name}'に該当する製品情報が見つかりませんでした。"
 
+
 @app.route("/", methods=["GET"])
 def home():
     return f"LINE Bot is running with {CUSTOM_MODEL_NAME}!"
+
+
+@app.route("/healthcheck", methods=["GET"])
+def healthcheck():
+    return "OK", 200
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -81,6 +89,7 @@ def webhook():
 
     return jsonify({"status": "ok"}), 200
 
+
 def get_chatgpt_response(user_message, product_info):
     start_time = time.time()
     try:
@@ -94,8 +103,8 @@ def get_chatgpt_response(user_message, product_info):
                     "role": "system", 
                     "content": (
                         "あなたは株式会社プラモール精工の代表取締役社長である脇山です。"
-                        "質問に対して社長として丁寧に、かつ正確に応答してください。"
-                        "提供された情報のみを使用し、顧客や社内の社員に信頼を持たせる応答を行ってください。"
+                        "質問に対して社長として丁寧に、かつ正確に回答してください。"
+                        "提供された情報のみを使用し、顧客や社内の社員に信頼を持たせる回答を行ってください。"
                     )
                 },
                 {"role": "user", "content": user_message},
@@ -113,11 +122,13 @@ def get_chatgpt_response(user_message, product_info):
         print("OpenAI APIエラー:", e)
         return "エラーが発生しました"
 
+
 def format_response(response):
     if response.endswith("以上です。"):
         response = response[:-5]
     response += " 何か他に知りたいことがあればお知らせください。"
     return response
+
 
 def send_line_reply(reply_token, message):
     line_api_url = "https://api.line.me/v2/bot/message/reply"
@@ -130,6 +141,7 @@ def send_line_reply(reply_token, message):
         "messages": [{"type": "text", "text": message}]
     }
     requests.post(line_api_url, headers=headers, json=data)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
