@@ -8,22 +8,14 @@ import json
 
 app = Flask(__name__)
 
-# カスタムモデル名を直接指定
 CUSTOM_MODEL_NAME = "ft:gpt-4o-2024-08-06:plamoul::Ax4X09hy"
 
 LINE_ACCESS_TOKEN = os.getenv("LINE_ACCESS_TOKEN")
-print("LINE_ACCESS_TOKEN:", LINE_ACCESS_TOKEN)
-
-# APIキーも環境変数から取得
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# Dropbox API アクセストークン
 DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN")
 
-# キャッシュ用データ格納
 cached_data = {"product_data": None, "company_info": None, "product_specs": None}
 
-# Dropboxからデータを取得しキャッシュ
 def fetch_all_data():
     if not cached_data["product_data"]:
         cached_data["product_data"] = fetch_data_from_dropbox("/product_data.json")
@@ -32,7 +24,6 @@ def fetch_all_data():
 
     product_data_json = json.loads(cached_data["product_data"]) if cached_data["product_data"] else []
     return product_data_json, cached_data["company_info"], cached_data["product_specs"]
-
 
 def fetch_data_from_dropbox(file_path):
     try:
@@ -43,7 +34,6 @@ def fetch_data_from_dropbox(file_path):
         print(f"Dropboxからデータ取得エラー: {e}")
         return ""
 
-
 def extract_president_name(company_info):
     lines = company_info.splitlines()
     for line in lines:
@@ -51,30 +41,25 @@ def extract_president_name(company_info):
             return line.split("代表取締役社長: ")[-1].strip()
     return "情報が見つかりません"
 
-
 def find_product_info(product_name, product_data):
     for product in product_data:
         if product["product_name"] == product_name:
             return f"プラモール精工では、{product_name}に関する情報として以下の内容がございます。\n{product['description']}"
     return f"申し訳ありません。プラモール精工では、'{product_name}'に該当する製品情報が見つかりませんでした。"
 
-
 @app.route("/", methods=["GET"])
 def home():
     return f"LINE Bot is running with {CUSTOM_MODEL_NAME}!"
 
-
 @app.route("/healthcheck", methods=["GET"])
 def healthcheck():
     return "OK", 200
-
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
     print("Webhook request received")
     body = request.json
 
-    # Dropboxからすべてのデータを取得
     product_data, company_info, product_specs = fetch_all_data()
 
     events = body.get("events", [])
@@ -83,28 +68,20 @@ def webhook():
             reply_token = event["replyToken"]
             user_message = event["message"]["text"]
 
-            # 質問内容によって応答を切り替え
             if "社長" in user_message:
                 president_name = extract_president_name(company_info)
                 response_text = f"プラモール精工の社長は、{president_name}です。"
             else:
                 response_text = find_product_info(user_message, product_data)
 
-            # ChatGPTで応答を取得
             gpt_response = format_response(get_chatgpt_response(user_message, response_text))
-
-            # LINEに返信を送信
             send_line_reply(reply_token, gpt_response)
 
     return jsonify({"status": "ok"}), 200
 
-
 def get_chatgpt_response(user_message, product_info):
-    start_time = time.time()
     try:
-        print(f"使用中のモデル: {CUSTOM_MODEL_NAME}")  # モデル名を確認
-        print("リクエスト送信中...")
-
+        print(f"使用中のモデル: {CUSTOM_MODEL_NAME}")
         response = openai.ChatCompletion.create(
             model=CUSTOM_MODEL_NAME,
             messages=[
@@ -119,25 +96,20 @@ def get_chatgpt_response(user_message, product_info):
                 {"role": "user", "content": user_message},
                 {"role": "assistant", "content": product_info}
             ],
-            temperature=0.0,  # ランダム性を抑制
+            temperature=0.0,
             max_tokens=300,
             api_key=OPENAI_API_KEY
         )
 
-        print("API応答:", response)  # APIレスポンスを出力
-        print(f"Response time: {time.time() - start_time} seconds")
         return response.choices[0].message["content"]
     except Exception as e:
         print("OpenAI APIエラー:", e)
         return "エラーが発生しました"
 
-
 def format_response(response):
     if response.endswith("以上です。"):
         response = response[:-5]
-    response += " 何か他に知りたいことがあればお知らせください。"
     return response
-
 
 def send_line_reply(reply_token, message):
     line_api_url = "https://api.line.me/v2/bot/message/reply"
@@ -150,7 +122,6 @@ def send_line_reply(reply_token, message):
         "messages": [{"type": "text", "text": message}]
     }
     requests.post(line_api_url, headers=headers, json=data)
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
