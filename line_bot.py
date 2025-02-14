@@ -3,7 +3,6 @@ from flask import Flask, request, jsonify
 import requests
 import openai
 import time
-import dropbox
 import json
 
 app = Flask(__name__)
@@ -12,27 +11,17 @@ CUSTOM_MODEL_NAME = "ft:gpt-4o-2024-08-06:plamoul::Ax4X09hy"
 
 LINE_ACCESS_TOKEN = os.getenv("LINE_ACCESS_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN")
 
 cached_data = {"product_data": None, "company_info": None, "product_specs": None}
 
 def fetch_all_data():
-    if not cached_data["product_data"]:
-        cached_data["product_data"] = fetch_data_from_dropbox("/product_data.json")
-        cached_data["company_info"] = fetch_data_from_dropbox("/company_info.txt")
-        cached_data["product_specs"] = fetch_data_from_dropbox("/product_specs.csv")
+    # Dropbox関連のデータ取得を無効化し、固定の値を使用
+    cached_data["product_data"] = '[{"product_name": "サンプル製品", "description": "これはサンプルの製品情報です。"}]'
+    cached_data["company_info"] = "代表取締役社長: 脇山"
+    cached_data["product_specs"] = "製品仕様情報は現在利用できません"
 
     product_data_json = json.loads(cached_data["product_data"]) if cached_data["product_data"] else []
     return product_data_json, cached_data["company_info"], cached_data["product_specs"]
-
-def fetch_data_from_dropbox(file_path):
-    try:
-        dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
-        _, response = dbx.files_download(file_path)
-        return response.content.decode("utf-8")
-    except Exception as e:
-        print(f"Dropboxからデータ取得エラー: {e}")
-        return ""
 
 def extract_president_name(company_info):
     lines = company_info.splitlines()
@@ -100,7 +89,6 @@ def get_chatgpt_response(user_message, product_info):
             max_tokens=300,
             api_key=OPENAI_API_KEY
         )
-
         return response.choices[0].message["content"]
     except Exception as e:
         print("OpenAI APIエラー:", e)
